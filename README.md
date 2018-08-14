@@ -1,6 +1,6 @@
 ### Word Sense Induction with Neural biLM and Symmetric Patterns
 
-This repository contains reproducing code for the paper Word Sense Induction with Neural biLM and Symmetric Patterns by (Amrami and Goldberg 2018)
+This repository contains reproducing code for the results in Word Sense Induction with Neural biLM and Symmetric Patterns paper
 
 ##### Usage instructions:
 The code is written in python 3.6 and runs the SemEval 2013 task 13
@@ -21,7 +21,7 @@ Installing a clean conda environment from scratch:
 conda create -n spwsi python=3.6 anaconda
 source activate spwsi
 
-# for cuda support install pytorch (see link below and note cuda version)
+# for cuda support install pytorch first (see link below and note the cuda version)
 conda install pytorch cuda80 -c pytorch
 
 # additional python pacakges from requirements.txt
@@ -32,7 +32,7 @@ python -m spacy download en
 sh download_resources.sh
 ```
 
- for pytorch installation w/ cuda support see instructions at [pytorch website](https://pytorch.org/)
+for pytorch installation w/ cuda support see instructions at [pytorch website](https://pytorch.org/)
 
 finally, to do the actual WSI using ELMo's LM, run spwsi_elmo.py
 
@@ -84,7 +84,7 @@ optional arguments:
 
 to run on cuda device 0
 ```bash
-spwsi_elmo.py --cuda 0
+python spwsi_elmo.py --cuda 0
 ```
 
 a detailed report will be available inside "debug" directory after running the script together with the produced task key file.
