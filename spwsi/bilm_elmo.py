@@ -29,7 +29,6 @@ class BilmElmo(Bilm):
         logging.info('reading elmo weights')
         with h5py.File(weights_path) as fin:
             self.elmo_softmax_w = fin['softmax/W'][:].transpose()
-            # self.elmo_softmax_b = fin['softmax/b'][:]
         self.elmo_word_vocab = []
 
         def add_words_from_lines(lines):
@@ -41,7 +40,6 @@ class BilmElmo(Bilm):
                 if word in stop_words or len(word) <= 1:
                     rows_delete.append(idx)
                     continue
-                    # self.elmo_softmax_b[idx] = -10e100
                 self.elmo_word_vocab.append(word)
             self.elmo_softmax_w = np.delete(self.elmo_softmax_w, rows_delete, 1)
 
@@ -93,7 +91,7 @@ class BilmElmo(Bilm):
             _ = list(self.elmo.embed_sentences([warm_up_sent] * self.batch_size, self.batch_size))
 
     def _get_top_words_dist(self, state):
-        log_probs = np.matmul(state, self.elmo_softmax_w)  # + self.elmo_softmax_b
+        log_probs = np.matmul(state, self.elmo_softmax_w)
         top_k_log_probs = np.argpartition(-log_probs, self.cutoff)[: self.cutoff]
         top_k_log_probs_vals = log_probs[top_k_log_probs]
         e_x = np.exp(top_k_log_probs_vals - np.max(top_k_log_probs_vals))
