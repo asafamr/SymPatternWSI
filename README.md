@@ -34,7 +34,8 @@ sh download_resources.sh
 
  for pytorch installation w/ cuda support see instructions at [pytorch website](https://pytorch.org/)
 
-finally, to run the WSI with ELMo's LM, run spwsi_elmo.py
+finally, to do the actual WSI using ELMo's LM, run spwsi_elmo.py
+
 script arguments:
 ```bash
 python spwsi_elmo.py -h
@@ -81,7 +82,7 @@ optional arguments:
                         matrix multiplication
 ```
 
-to run with cuda device 0
+to run on cuda device 0
 ```bash
 spwsi_elmo.py --cuda 0
 ```
