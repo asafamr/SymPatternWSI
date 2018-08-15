@@ -104,7 +104,7 @@ created inside the debug dir.
 This file will contain a mapping from the task dataset entries to their
 induced senses. The SemEval task code evaluate this mapping and produce
 two metric scores: FNMI and FBC as descibed in the paper.
-You can re-run this key file scoring using evaluate_key.sh
+You can re-run this key file evaluation using evaluate_key.sh
 
 
 ### Results:

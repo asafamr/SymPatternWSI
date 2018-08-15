@@ -85,6 +85,7 @@ def evaluate_labeling(dir_path, labeling: Dict[str, Dict[str, int]], key_path: s
         fnmi = [x[1] for x in scores['FNMI']['all'] if x[0] == 'Fuzzy Normalized Mutual Information'][0]
         fbc = [x[1] for x in scores['FBC']['all'] if x[0] == 'f-score'][0]
         if key_path:
+            print('writing key to file %s' % key_path)
             logging.info('writing key to file %s' % key_path)
             with open(key_path, 'w', encoding="utf-8") as fout2:
                 fout2.write('\n'.join(lines))

@@ -65,8 +65,8 @@ if __name__ == '__main__':
                         help='append final run results to this file')
     parser.add_argument('--run-prefix', dest='run_prefix', type=str, default='',
                         help='will be prepended to log file names')
-    parser.add_argument('--elmo-batch-size', dest='elmo_batch_size', type=int, default=40,
-                        help='ELMo prediction batch size')
+    parser.add_argument('--elmo-batch-size', dest='elmo_batch_size', type=int, default=50,
+                        help='ELMo prediction batch size (optimization only)')
     parser.add_argument('--prediction-cutoff', dest='prediction_cutoff', type=int, default=50,
                         help='ELMo predicted distribution top K cutoff')
     parser.add_argument('--cutoff-elmo-vocab', dest='cutoff_elmo_vocab', type=int, default=100000,
@@ -83,12 +83,16 @@ if __name__ == '__main__':
 
     run_name = args.run_prefix + '-' if args.run_prefix else ''
     run_name += strftime("%y-%m-%d-%H-%M-%S")
+    print('this run name: %s' % run_name)
     if args.debug_dir:
         if not os.path.exists(args.debug_dir):
             os.makedirs(args.debug_dir)
-        logging.basicConfig(filename=os.path.join(args.debug_dir, '%s.log.txt' % run_name),
-                            format='%(asctime)s %(message)s', datefmt='%H:%M:%S',
-                            level=logging.INFO)
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.INFO)
+        handler = logging.FileHandler(os.path.join(args.debug_dir, '%s.log.txt' % run_name), 'w', 'utf-8')
+        formatter = logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%H:%M:%S')
+        handler.setFormatter(formatter)  # Pass handler as a parameter, not assign
+        root_logger.addHandler(handler)
     logging.info(startmsg)
 
     run_sp_wsi(cuda_device=args.cuda,
