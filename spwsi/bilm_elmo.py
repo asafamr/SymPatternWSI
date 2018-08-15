@@ -187,12 +187,10 @@ class BilmElmo(Bilm):
             for _ in range(n_representatives):
                 representative = {}
                 for _ in range(samples_per_side_per_representative):
-                    forward_sampled_word = self.elmo_word_vocab[forward_samples.pop()]
-                    backward_sampled_word = self.elmo_word_vocab[backward_samples.pop()]
-                    representative['fw:%s' % forward_sampled_word] = representative.get(
-                        'fw:%s' % forward_sampled_word, 0) + 1
-                    representative['bw:%s' % backward_sampled_word] = representative.get(
-                        'bw:%s' % backward_sampled_word, 0) + 1
+                    for sample_src in forward_samples,backward_samples:
+                        sample_vocab_idx=sample_src.pop()
+                        sample_word = self.elmo_word_vocab[sample_vocab_idx]
+                        representative[sample_word] = representative.get(sample_word, 0) + 1
                 representatives.append(representative)
             logging.info('first 3 representatives out of %d:\n%s' % (n_representatives, representatives[:3]))
             results[inst_id] = representatives

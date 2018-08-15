@@ -24,7 +24,10 @@ Installing a clean conda environment from scratch:
 conda create -n spwsi python=3.6 anaconda
 source activate spwsi
 
-# for cuda support install pytorch first (see link below and note the cuda version)
+# for cuda support install pytorch first (see link below and note the cuda version!)
+# in our system a full run w/ cuda took ~2 minutes. w/o ~20 minutes
+# if you don't mind that,
+# you can skip next line and run spwsi_elmo.py with arguments: --cuda -1
 conda install pytorch cuda80 -c pytorch
 
 # additional python pacakges from requirements.txt
@@ -57,15 +60,14 @@ usage: spwsi_elmo.py [-h] [--n-clusters N_CLUSTERS]
 BiLM Symmetric Patterns WSI Demo
 
 optional arguments:
-  optional arguments:
   -h, --help            show this help message and exit
   --n-clusters N_CLUSTERS
                         number of clusters per instance (default: 8)
   --n-representatives N_REPRESENT
-                        number of representations per sentence (default: 10)
+                        number of representations per sentence (default: 20)
   --n-samples-side N_SAMPLES_SIDE
                         number of samples per representations side (default:
-                        6)
+                        4)
   --cuda CUDA           cuda device for ELMo (-1 to disable) (default: 0)
   --debug-dir DEBUG_DIR
                         logs and keys are written will be written to this dir
@@ -81,12 +83,13 @@ optional arguments:
   --run-prefix RUN_PREFIX
                         will be prepended to log file names (default: )
   --elmo-batch-size ELMO_BATCH_SIZE
-                        ELMo prediction batch size (default: 40)
+                        ELMo prediction batch size (optimization only)
+                        (default: 50)
   --prediction-cutoff PREDICTION_CUTOFF
                         ELMo predicted distribution top K cutoff (default: 50)
   --cutoff-elmo-vocab CUTOFF_ELMO_VOCAB
                         optimization: only use top K words for faster output
-                        matrix multiplication (default: 100000)
+                        matrix multiplication (default: 50000)
 ```
 The default parameters specified above are used in the paper
 
@@ -106,6 +109,7 @@ induced senses. The SemEval task code evaluate this mapping and produce
 two metric scores: FNMI and FBC as descibed in the paper.
 You can re-run this key file evaluation using evaluate_key.sh
 
+Developed and tested on Ubuntu 16, Cuda 8.0
 
 ### Results:
 TODO:add

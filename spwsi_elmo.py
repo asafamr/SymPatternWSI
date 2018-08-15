@@ -23,6 +23,7 @@ def run_sp_wsi(cuda_device, disable_lemmatization, disable_symmetric_patterns, d
                     batch_size=elmo_batch_size, cutoff=prediction_cutoff,
                     cutoff_elmo_vocab=cutoff_elmo_vocab,
                     disable_symmetric_patterns=disable_symmetric_patterns)
+
     clusterer = WsiClusterer(elmo, n_represent, n_samples_side, disable_tfidf, n_clusters)
     inst_id_to_sense = {}
     for lemma_pos, inst_id_to_sentence in tqdm(sentences_by_lemma_pos.items(), desc='predicting substitutes'):
@@ -45,9 +46,9 @@ if __name__ == '__main__':
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--n-clusters', dest='n_clusters', type=int, default=8,
                         help='number of clusters per instance')
-    parser.add_argument('--n-representatives', dest='n_represent', type=int, default=10,
+    parser.add_argument('--n-representatives', dest='n_represent', type=int, default=20,
                         help='number of representations per sentence')
-    parser.add_argument('--n-samples-side', dest='n_samples_side', type=int, default=6,
+    parser.add_argument('--n-samples-side', dest='n_samples_side', type=int, default=4,
                         help='number of samples per representations side')
     parser.add_argument('--cuda', type=int, default=0,
                         help='cuda device for ELMo (-1 to disable)')
@@ -69,7 +70,7 @@ if __name__ == '__main__':
                         help='ELMo prediction batch size (optimization only)')
     parser.add_argument('--prediction-cutoff', dest='prediction_cutoff', type=int, default=50,
                         help='ELMo predicted distribution top K cutoff')
-    parser.add_argument('--cutoff-elmo-vocab', dest='cutoff_elmo_vocab', type=int, default=100000,
+    parser.add_argument('--cutoff-elmo-vocab', dest='cutoff_elmo_vocab', type=int, default=50000,
                         help='optimization: only use top K words for faster output matrix multiplication')
     args = parser.parse_args()
 
