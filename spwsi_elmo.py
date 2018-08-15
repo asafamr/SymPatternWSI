@@ -9,8 +9,40 @@ import os
 import logging
 from time import strftime
 
+
+def run_sp_wsi(cuda_device, disable_lemmatization, disable_symmetric_patterns, disable_tfidf,
+               elmo_batch_size, prediction_cutoff, cutoff_elmo_vocab, n_represent, n_samples_side, n_clusters,
+               debug_dir, append_results_file):
+    sentences_by_lemma_pos = defaultdict(dict)
+    for tokens, target_idx, inst_id in generate_sem_eval_2013('./resources/SemEval-2013-Task-13-test-data'):
+        lemma_pos = inst_id.rsplit('.', 1)[0]
+        sentences_by_lemma_pos[lemma_pos][inst_id] = (tokens, target_idx)
+
+    elmo = BilmElmo(cuda_device, './resources/elmo_2x4096_512_2048cnn_2xhighway_softmax_weights.hdf5',
+                    './resources/vocab-2016-09-10.txt', lemmatize_predictions=not disable_lemmatization,
+                    batch_size=elmo_batch_size, cutoff=prediction_cutoff,
+                    cutoff_elmo_vocab=cutoff_elmo_vocab,
+                    disable_symmetric_patterns=disable_symmetric_patterns)
+    clusterer = WsiClusterer(elmo, n_represent, n_samples_side, disable_tfidf, n_clusters)
+    inst_id_to_sense = {}
+    for lemma_pos, inst_id_to_sentence in tqdm(sentences_by_lemma_pos.items(), desc='predicting substitutes'):
+        inst_id_to_sense.update(clusterer.soft_cluster_sentences_to_senses(inst_id_to_sentence))
+
+    out_key_path = None
+    if debug_dir:
+        out_key_path = os.path.join(debug_dir, run_name + '.key')
+    fnmi, fbc = evaluate_labeling('./resources/SemEval-2013-Task-13-test-data', inst_id_to_sense, out_key_path)
+    msg = 'results FNMI %.2f FBC %.2f AVG %.2f' % (fnmi * 100, fbc * 100, np.sqrt(fnmi * fbc) * 100)
+    logging.info(msg)
+    print(msg)
+    if append_results_file:
+        with open(append_results_file, 'a', encoding="utf-8") as fout:
+            fout.write('%s\t%.2f\t%.2f\t%.2f\n' % (run_name, fnmi * 100, fbc * 100, np.sqrt(fnmi * fbc) * 100))
+
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='BiLM Symmetric Patterns WSI Demo')
+    parser = argparse.ArgumentParser(description='BiLM Symmetric Patterns WSI Demo',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--n-clusters', dest='n_clusters', type=int, default=8,
                         help='number of clusters per instance')
     parser.add_argument('--n-representatives', dest='n_represent', type=int, default=10,
@@ -59,28 +91,13 @@ if __name__ == '__main__':
                             level=logging.INFO)
     logging.info(startmsg)
 
-    sentences_by_lemma_pos = defaultdict(dict)
-    for tokens, target_idx, inst_id in generate_sem_eval_2013('./resources/SemEval-2013-Task-13-test-data'):
-        lemma_pos = inst_id.rsplit('.', 1)[0]
-        sentences_by_lemma_pos[lemma_pos][inst_id] = (tokens, target_idx)
-
-    elmo = BilmElmo(args.cuda, './resources/elmo_2x4096_512_2048cnn_2xhighway_softmax_weights.hdf5',
-                    './resources/vocab-2016-09-10.txt', lemmatize_predictions=not args.disable_lemmatization,
-                    batch_size=args.elmo_batch_size, cutoff=args.prediction_cutoff,
-                    cutoff_elmo_vocab=args.cutoff_elmo_vocab,
-                    disable_symmetric_patterns=args.disable_symmetric_patterns)
-    clusterer = WsiClusterer(elmo, args.n_represent, args.n_samples_side, args.disable_tfidf, args.n_clusters)
-    inst_id_to_sense = {}
-    for lemma_pos, inst_id_to_sentence in tqdm(sentences_by_lemma_pos.items(), desc='predicting substitutes'):
-        inst_id_to_sense.update(clusterer.soft_cluster_sentences_to_senses(inst_id_to_sentence))
-
-    out_key_path = None
-    if args.debug_dir:
-        out_key_path = os.path.join(args.debug_dir, run_name + '.key')
-    fnmi, fbc = evaluate_labeling('./resources/SemEval-2013-Task-13-test-data', inst_id_to_sense, out_key_path)
-    msg = 'results FNMI %.2f FBC %.2f AVG %.2f' % (fnmi * 100, fbc * 100, np.sqrt(fnmi * fbc) * 100)
-    logging.info(msg)
-    print(msg)
-    if args.append_results_file:
-        with open(args.append_results_file, 'a') as fout:
-            fout.write('%s\t%.2f\t%.2f\t%.2f\n' % (run_name, fnmi * 100, fbc * 100, np.sqrt(fnmi * fbc) * 100))
+    run_sp_wsi(cuda_device=args.cuda,
+               disable_lemmatization=args.disable_lemmatization,
+               disable_symmetric_patterns=args.disable_symmetric_patterns,
+               disable_tfidf=args.disable_tfidf,
+               elmo_batch_size=args.elmo_batch_size, prediction_cutoff=args.prediction_cutoff,
+               cutoff_elmo_vocab=args.cutoff_elmo_vocab, n_represent=args.n_represent,
+               n_samples_side=args.n_samples_side,
+               n_clusters=args.n_clusters,
+               debug_dir=args.debug_dir, append_results_file=args.append_results_file
+               )

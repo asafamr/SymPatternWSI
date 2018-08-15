@@ -12,7 +12,7 @@ def generate_sem_eval_2013(dir_path: str):
     nlp = spacy.load("en", disable=['ner', 'parser'])
     in_xml_path = os.path.join(dir_path, 'contexts/senseval2-format/semeval-2013-task-13-test-data.senseval2.xml')
     gold_key_path = os.path.join(dir_path, 'keys/gold/all.key')
-    with open(in_xml_path) as fin_xml, open(gold_key_path) as fin_key:
+    with open(in_xml_path, encoding="utf-8") as fin_xml, open(gold_key_path, encoding="utf-8") as fin_key:
         instid_in_key = set()
         for line in fin_key:
             lemma_pos, inst_id, _ = line.strip().split(maxsplit=2)
@@ -42,6 +42,7 @@ def evaluate_labeling(dir_path, labeling: Dict[str, Dict[str, int]], key_path: s
     :return: FNMI, FBC as calculated by SemEval provided code
     """
     logging.info('starting evaluation key_path: %s' % key_path)
+
     def get_scores(gold_key, eval_key):
         ret = {}
         for metric, jar in [
@@ -85,7 +86,6 @@ def evaluate_labeling(dir_path, labeling: Dict[str, Dict[str, int]], key_path: s
         fbc = [x[1] for x in scores['FBC']['all'] if x[0] == 'f-score'][0]
         if key_path:
             logging.info('writing key to file %s' % key_path)
-            with open(key_path,'w') as fout2:
+            with open(key_path, 'w', encoding="utf-8") as fout2:
                 fout2.write('\n'.join(lines))
         return fnmi, fbc
-

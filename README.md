@@ -1,12 +1,15 @@
 ### Word Sense Induction with Neural biLM and Symmetric Patterns
 
-This repository contains reproducing code for the results in Word Sense Induction with Neural biLM and Symmetric Patterns paper
+This repository contains reproducing code for the results in Word Sense
+Induction with Neural biLM and Symmetric Patterns paper
 
 ##### Usage instructions:
 The code is written in python 3.6 and runs the SemEval 2013 task 13
-evaluation code provided by the SemEval 2013 workshop, which is written in Java and therefore require installed JRE.
+evaluation code provided by the SemEval 2013 workshop, which is written
+in Java and therefore require installed JRE.
 
-It also requires the AllenNLP python package as well as a few other packages.
+It also requires the AllenNLP python package as well as a few other
+packages.
 Below are detailed instructions for running the code.
 
 
@@ -32,7 +35,8 @@ python -m spacy download en
 sh download_resources.sh
 ```
 
-for pytorch installation w/ cuda support see instructions at [pytorch website](https://pytorch.org/)
+for pytorch installation w/ cuda support see instructions at
+[pytorch website](https://pytorch.org/)
 
 finally, to do the actual WSI using ELMo's LM, run spwsi_elmo.py
 
@@ -53,39 +57,55 @@ usage: spwsi_elmo.py [-h] [--n-clusters N_CLUSTERS]
 BiLM Symmetric Patterns WSI Demo
 
 optional arguments:
+  optional arguments:
   -h, --help            show this help message and exit
   --n-clusters N_CLUSTERS
-                        number of clusters per instance
+                        number of clusters per instance (default: 8)
   --n-representatives N_REPRESENT
-                        number of representations per sentence
+                        number of representations per sentence (default: 10)
   --n-samples-side N_SAMPLES_SIDE
-                        number of samples per representations side
-  --cuda CUDA           cuda device for ELMo (-1 to disable)
+                        number of samples per representations side (default:
+                        6)
+  --cuda CUDA           cuda device for ELMo (-1 to disable) (default: 0)
   --debug-dir DEBUG_DIR
                         logs and keys are written will be written to this dir
+                        (default: debug)
   --disable-lemmatization
-                        disable ELMO prediction lemmatization
+                        disable ELMO prediction lemmatization (default: False)
   --disable-symmetric-patterns
                         disable "x and y" symmetric pattern and predict
-                        substitutes inplace
-  --disable-tfidf       disable tfidf transformer
+                        substitutes inplace (default: False)
+  --disable-tfidf       disable tfidf transformer (default: False)
   --append-results-file APPEND_RESULTS_FILE
-                        append final run results to this file
+                        append final run results to this file (default: None)
   --run-prefix RUN_PREFIX
-                        will be prepended to log file names
+                        will be prepended to log file names (default: )
   --elmo-batch-size ELMO_BATCH_SIZE
-                        ELMo prediction batch size
+                        ELMo prediction batch size (default: 40)
   --prediction-cutoff PREDICTION_CUTOFF
-                        ELMo predicted distribution top K cutoff
+                        ELMo predicted distribution top K cutoff (default: 50)
   --cutoff-elmo-vocab CUTOFF_ELMO_VOCAB
                         optimization: only use top K words for faster output
-                        matrix multiplication
+                        matrix multiplication (default: 100000)
 ```
+The default parameters specified above are used in the paper
+
 
 to run on cuda device 0
 ```bash
 python spwsi_elmo.py --cuda 0
 ```
 
-a detailed report will be available inside "debug" directory after running the script together with the produced task key file.
-you can re-run the key file scoring using evaluate_key.sh
+A detailed execution report will be available inside "debug" directory
+after running the script.
+
+Additionally, a key file, whose name is ending with '.key', will be
+created inside the debug dir.
+This file will contain a mapping from the task dataset entries to their
+induced senses. The SemEval task code evaluate this mapping and produce
+two metric scores: FNMI and FBC as descibed in the paper.
+You can re-run this key file scoring using evaluate_key.sh
+
+
+### Results:
+TODO:add

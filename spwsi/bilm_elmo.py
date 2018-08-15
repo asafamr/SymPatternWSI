@@ -46,10 +46,10 @@ class BilmElmo(Bilm):
         logging.info('reading elmo vocabulary')
         if lemmatize_predictions:
             if os.path.isfile(vocab_path + '.lemmatized'):
-                with open(vocab_path + '.lemmatized') as fin:
+                with open(vocab_path + '.lemmatized', encoding="utf-8") as fin:
                     add_words_from_lines(fin)
             else:
-                with open(vocab_path) as fin:
+                with open(vocab_path, encoding="utf-8") as fin:
                     unlem = [x.strip() for x in fin.readlines()]
                 logging.info('lemmatizing ELMo vocabulary')
                 print('lemmatizing ELMo vocabulary')
@@ -60,7 +60,7 @@ class BilmElmo(Bilm):
                         nlp.pipe(unlem, batch_size=1000, n_threads=multiprocessing.cpu_count()),
                         total=len(unlem)):
                     new_vocab.append(spacyed[0].lemma_ if spacyed[0].lemma_ != '-PRON-' else spacyed[0].lower_)
-                with open(vocab_path + '.lemmatized', 'w') as fout:
+                with open(vocab_path + '.lemmatized', 'w', encoding="utf-8") as fout:
                     for word in new_vocab:
                         fout.write('%s\n' % word)
                 add_words_from_lines(new_vocab)
@@ -68,7 +68,7 @@ class BilmElmo(Bilm):
                 print('lemmatization done and cached to file')
         else:
             # no lemmatization
-            with open(vocab_path) as fin:
+            with open(vocab_path, encoding="utf-8") as fin:
                 add_words_from_lines(fin)
 
         logging.info('caching cnn embeddings')
@@ -98,6 +98,39 @@ class BilmElmo(Bilm):
         probs = e_x / e_x.sum(axis=0)
         return top_k_log_probs, probs
 
+    def _embed_sentences(self,inst_id_to_sentence: Dict[str, Tuple[List[str], int]]) -> Tuple[List,List]:
+        inst_id_sent_tuples = list(inst_id_to_sentence.items())
+        target = inst_id_sent_tuples[0][0].rsplit('.', 1)[0]
+        to_embed = []
+
+        if self.disable_symmetric_patterns:
+            # w/o sym. patterns - predict for blanked out word.
+            # if the target word is the first or last in sentence get empty prediction by embedding '.'
+            for _, (tokens, target_idx) in inst_id_sent_tuples:
+                forward = tokens[:target_idx]
+                backward = tokens[target_idx + 1:]
+                if not forward:
+                    forward = ['.']
+                if not backward:
+                    backward = ['.']
+                to_embed.append(forward)
+                to_embed.append(backward)
+        else:
+
+            # w/ sym. patterns - include target word + "and" afterwards in both directions
+            for _, (tokens, target_idx) in inst_id_sent_tuples:
+
+                # forward sentence
+                to_embed.append(tokens[:target_idx + 1] + ['and'])
+
+                # backward sentence
+                to_embed.append(['and'] + tokens[target_idx:])
+
+        logging.info('embedding %d sentences for target %s' % (len(to_embed), target))
+        embedded = list(self.elmo.embed_sentences(to_embed, self.batch_size))
+
+        return inst_id_sent_tuples, embedded
+
     def predict_sent_substitute_representatives(self, inst_id_to_sentence: Dict[str, Tuple[List[str], int]],
                                                 n_representatives: int,
                                                 samples_per_side_per_representative: int) -> Dict[
@@ -115,27 +148,8 @@ class BilmElmo(Bilm):
         :param samples_per_side_per_representative: number of samples to draw from each side
         :return:
         """
-        inst_id_sent_tuples = list(inst_id_to_sentence.items())
-        target = inst_id_sent_tuples[0][0].rsplit('.', 1)[0]
+        inst_id_sent_tuples, embedded=self._embed_sentences(inst_id_to_sentence)
         lemma = inst_id_sent_tuples[0][0].split('.')[0]
-        to_embed = []
-        if self.disable_symmetric_patterns:
-            # w/o sym. patterns - predict for blanked out word.
-            # if the target word is the first or last in sentence get empty prediction by embedding '.'
-            for _, (tokens, target_idx) in inst_id_sent_tuples:
-                forward = tokens[:target_idx]
-                backward = tokens[target_idx + 1:]
-                if not forward:
-                    forward = ['.']
-                if not backward:
-                    backward = ['.']
-                to_embed += [forward, backward]
-        else:
-            # w/ sym. patterns - include target word + "and" afterwards in both directions
-            for _, (tokens, target_idx) in inst_id_sent_tuples:
-                to_embed += [tokens[:target_idx + 1] + ['and'], ['and'] + tokens[target_idx:]]
-        logging.info('embedding %d sentences for target %s' % (len(to_embed), target))
-        embedded = list(self.elmo.embed_sentences(to_embed, self.batch_size))
 
         results = {}
         for i in range(len(inst_id_sent_tuples)):
@@ -143,6 +157,8 @@ class BilmElmo(Bilm):
             sentence = ' '.join([t if i != target_idx else '***%s***' % t for i, t in enumerate(tokens)])
             logging.info('instance %s sentence: %s' % (inst_id, sentence))
 
+            # these will be multiplied by ELMo's output matrix, [layer-number,token-index, state dims]
+            # (first 512 state dims in elmo are the forward LM, 512:1024 are the backward LM)
             forward_out_em = embedded[i * 2][2, -1, :512]
             backward_out_em = embedded[i * 2 + 1][2, 0, 512:]
 
@@ -150,6 +166,7 @@ class BilmElmo(Bilm):
             backward_idxs, backward_dist = self._get_top_words_dist(backward_out_em)
 
             forward_samples = []
+
             # after removing samples equal to disamb. target,
             # we might end up with not enough samples, so repeat until we have enough samples
             while len(forward_samples) < n_representatives * samples_per_side_per_representative:
