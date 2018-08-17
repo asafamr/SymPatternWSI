@@ -1,7 +1,7 @@
 import spacy
 import os
-from xml.etree import ElementTree as ET
-from typing import Dict, Tuple
+from xml.etree import ElementTree
+from typing import Dict
 import tempfile
 import subprocess
 import logging
@@ -17,7 +17,7 @@ def generate_sem_eval_2013(dir_path: str):
         for line in fin_key:
             lemma_pos, inst_id, _ = line.strip().split(maxsplit=2)
             instid_in_key.add(inst_id)
-        et_xml = ET.parse(fin_xml)
+        et_xml = ElementTree.parse(fin_xml)
         for word in et_xml.getroot():
             for inst in word.getchildren():
                 inst_id = inst.attrib['id']
@@ -32,7 +32,8 @@ def generate_sem_eval_2013(dir_path: str):
                 yield before + [target] + after, len(before), inst_id
 
 
-def evaluate_labeling(dir_path, labeling: Dict[str, Dict[str, int]], key_path: str = None) -> Tuple[float, float]:
+def evaluate_labeling(dir_path, labeling: Dict[str, Dict[str, int]], key_path: str = None) \
+        -> Dict[str, Dict[str, float]]:
     """
     labeling example : {'become.v.3': {'become.sense.1':3,'become.sense.5':17} ... }
     means instance become.v.3' is 17/20 in sense 'become.sense.5' and 3/20 in sense 'become.sense.1'
@@ -45,29 +46,30 @@ def evaluate_labeling(dir_path, labeling: Dict[str, Dict[str, int]], key_path: s
 
     def get_scores(gold_key, eval_key):
         ret = {}
-        for metric, jar in [
+        for metric, jar, column in [
             #         ('jaccard-index','SemEval-2013-Task-13-test-data/scoring/jaccard-index.jar'),
             #         ('pos-tau', 'SemEval-2013-Task-13-test-data/scoring/positional-tau.jar'),
             #         ('WNDC', 'SemEval-2013-Task-13-test-data/scoring/weighted-ndcg.jar'),
-            ('FNMI', os.path.join(dir_path, 'scoring/fuzzy-nmi.jar')),
-            ('FBC', os.path.join(dir_path, 'scoring/fuzzy-bcubed.jar')),
+            ('FNMI', os.path.join(dir_path, 'scoring/fuzzy-nmi.jar'), 1),
+            ('FBC', os.path.join(dir_path, 'scoring/fuzzy-bcubed.jar'), 3),
         ]:
             logging.info('calculating metric %s' % metric)
             res = subprocess.Popen(['java', '-jar', jar, gold_key, eval_key], stdout=subprocess.PIPE).stdout.readlines()
-            columns = []
+            # columns = []
             for line in res:
-
                 line = line.decode().strip()
                 if line.startswith('term'):
-                    columns = line.split('\t')
+                    # columns = line.split('\t')
+                    pass
                 else:
                     split = line.split('\t')
-                    if len(split) > 1:
+                    if len(split) > column:
                         word = split[0]
-                        results = list(zip(columns[1:], map(float, split[1:])))
-                        if metric not in ret:
-                            ret[metric] = {}
-                        ret[metric][word] = results
+                        # results = list(zip(columns[1:], map(float, split[1:])))
+                        result = split[column]
+                        if word not in ret:
+                            ret[word] = {}
+                        ret[word][metric] = float(result)
 
         return ret
 
@@ -82,11 +84,8 @@ def evaluate_labeling(dir_path, labeling: Dict[str, Dict[str, int]], key_path: s
         fout.flush()
         scores = get_scores(os.path.join(dir_path, 'keys/gold/all.key'),
                             fout.name)
-        fnmi = [x[1] for x in scores['FNMI']['all'] if x[0] == 'Fuzzy Normalized Mutual Information'][0]
-        fbc = [x[1] for x in scores['FBC']['all'] if x[0] == 'f-score'][0]
         if key_path:
-            print('writing key to file %s' % key_path)
             logging.info('writing key to file %s' % key_path)
             with open(key_path, 'w', encoding="utf-8") as fout2:
                 fout2.write('\n'.join(lines))
-        return fnmi, fbc
+        return scores
