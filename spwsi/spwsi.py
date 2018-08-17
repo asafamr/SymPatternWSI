@@ -8,7 +8,7 @@ import os
 import numpy as np
 
 DEFAULT_PARAMS = dict(
-    n_clusters=8,
+    n_clusters=7,
     n_represent=20,
     n_samples_side=4,
     cuda_device=0,

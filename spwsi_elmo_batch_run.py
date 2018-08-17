@@ -29,7 +29,7 @@ def get_configs_ablations():
     """
     generates 10 of each ablation scenario
     """
-    for _ in range(10):
+    for _ in range(30):
         yield dict()
         yield dict(disable_symmetric_patterns=True)
         yield dict(disable_lemmatization=True)
@@ -44,7 +44,7 @@ def get_configs_cluster_size():
     """
     for _ in range(10):
         for n_clusters in range(4, 16):
-            yield dict()
+            yield dict(n_clusters=n_clusters)
 
 
 def get_configs_random_search():
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     pool = multiprocessing.Pool(len(gpus), initializer=worker_init)
 
     out_csv_path = os.path.join(debug_dir, run_name + '.data.csv')
-    print('starting ablation tests. results will be written to %s. this might take a while...' % out_csv_path)
+    print('starting batch run. results will be written to %s. this might take a while...' % out_csv_path)
     # in addition to per target scores, an "all" entry row will contain the final result for a run
     with open(out_csv_path, 'a') as fout:
         writer = csv.writer(fout)
@@ -189,7 +189,7 @@ if __name__ == '__main__':
                               'disable_symmetric_patterns', 'disable_tfidf', 'prediction_cutoff']
         writer.writerow(
             ['run_name', 'target', 'FBC', 'FNMI', 'AVG', 'lm_batch_size', 'cutoff_lm_vocab'] + conf_params_report)
-        for run_name_done, conf, scores in tqdm(pool.imap_unordered(worker_do, enumerate(get_configs_cluster_size()))):
+        for run_name_done, conf, scores in tqdm(pool.imap_unordered(worker_do, enumerate(target_function()))):
             for target, target_scores in scores.items():
                 writer.writerow([run_name_done, target,
                                  target_scores['FBC'],
