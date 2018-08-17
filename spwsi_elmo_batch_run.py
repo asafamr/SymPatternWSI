@@ -21,8 +21,7 @@ run_name = ''  # set in main
 
 cuda_device_dispatcher = None  # set in main
 
-# gpus = [0, 0, 1, 1, 2, 2, 3, 3]  # multiple workers per gpu
-gpus = [0, 0, 1, 1, 2, 2]
+gpus = [0, 0, 1, 1, 2, 2, 3, 3]  # multiple workers per gpu
 
 
 # generate configurations to run
@@ -140,11 +139,7 @@ def worker_do(idx_conf):
 
 
 if __name__ == '__main__':
-    print('BiLM Symmetric Patterns WSI Demo - Ablation')
-
-    cuda_device_dispatcher = multiprocessing.Queue()
-    for i, gpu in enumerate(gpus):
-        cuda_device_dispatcher.put((i, gpu))
+    print('BiLM Symmetric Patterns WSI Demo - Batch run')
 
     debug_dir = 'debug'
 
@@ -153,7 +148,7 @@ if __name__ == '__main__':
         os.makedirs(debug_dir)
 
     target_function = None
-    gen_name = sys.argv.get(1, '')
+    gen_name = sys.argv[1] if len(sys.argv) > 1 else None
     if gen_name == 'ablation':
         target_function = get_configs_ablations
     elif gen_name == 'search':
@@ -162,9 +157,17 @@ if __name__ == '__main__':
         target_function = get_configs_cluster_size
     else:
         raise Exception(
-            'missing valid scenario in script arguments, valid scenarios are: ablation,search and n_clusters')
+            'missing valid scenario in script arguments, valid scenarios are: ablation, search, n_clusters')
     run_name += '-' + gen_name
+    print('scenario: %s' % gen_name)
+    if len(sys.argv) > 2:
+        # cuda devices in second arguments
+        gpus = [int(x) for x in sys.argv[2].split(',')]
+        print('gpus set in command line arguments: %s' % gpus)
 
+    cuda_device_dispatcher = multiprocessing.Queue()
+    for i, gpu in enumerate(gpus):
+        cuda_device_dispatcher.put((i, gpu))
     pool = multiprocessing.Pool(len(gpus), initializer=worker_init)
 
     out_csv_path = os.path.join(debug_dir, run_name + '.data.csv')
