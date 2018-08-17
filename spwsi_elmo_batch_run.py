@@ -109,7 +109,6 @@ def worker_init():
     root_logger.addHandler(handler)
 
     elmo_vocab_path = './resources/vocab-2016-09-10.txt'
-    BilmElmo.create_lemmatized_vocabulary_if_needed(elmo_vocab_path)
     elmo_as_lm = BilmElmo(cuda_device, './resources/elmo_2x4096_512_2048cnn_2xhighway_softmax_weights.hdf5',
                           elmo_vocab_path, batch_size=LM_BATCH_SIZE,
                           cutoff_elmo_vocab=LM_VOACB_CUTOFF
@@ -138,6 +137,13 @@ def worker_do(idx_conf):
     return run_name_full, params, res
 
 
+def create_lemmatized_if_needed():
+    # done in a different process to avid polluting the global environment when importing everything
+    from spwsi.bilm_elmo import BilmElmo  # this is intentionally here, when ELMo is imported some state is set
+    elmo_vocab_path = './resources/vocab-2016-09-10.txt'
+    BilmElmo.create_lemmatized_vocabulary_if_needed(elmo_vocab_path)
+
+
 if __name__ == '__main__':
     print('BiLM Symmetric Patterns WSI Demo - Batch run')
 
@@ -164,6 +170,10 @@ if __name__ == '__main__':
         # cuda devices in second arguments
         gpus = [int(x) for x in sys.argv[2].split(',')]
         print('gpus set in command line arguments: %s' % gpus)
+
+    lemmatizer = multiprocessing.Process(target=create_lemmatized_if_needed)
+    lemmatizer.start()
+    lemmatizer.join()
 
     cuda_device_dispatcher = multiprocessing.Queue()
     for i, gpu in enumerate(gpus):
