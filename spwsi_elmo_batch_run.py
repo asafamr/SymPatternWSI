@@ -7,6 +7,7 @@ import numpy as np
 from tqdm import tqdm
 import time
 import csv
+import sys
 
 # will be set per process during worker init and persist until the end
 spwsi_runner = None
@@ -20,7 +21,8 @@ run_name = ''  # set in main
 
 cuda_device_dispatcher = None  # set in main
 
-gpus = [0, 0, 1, 1, 2, 2, 3, 3]  # multiple workers per gpu
+# gpus = [0, 0, 1, 1, 2, 2, 3, 3]  # multiple workers per gpu
+gpus = [0, 0, 1, 1, 2, 2]
 
 
 # generate configurations to run
@@ -35,6 +37,15 @@ def get_configs_ablations():
         yield dict(disable_tfidf=True)
         yield dict(disable_symmetric_patterns=True, disable_lemmatization=True)
         yield dict(disable_symmetric_patterns=True, disable_lemmatization=True, disable_tfidf=True)
+
+
+def get_configs_cluster_size():
+    """
+    generates 10 of each cluster size
+    """
+    for _ in range(10):
+        for n_clusters in range(4, 16):
+            yield dict()
 
 
 def get_configs_random_search():
@@ -86,7 +97,7 @@ def get_configs_random_search():
 
 def worker_init():
     global spwsi_runner, LM_BATCH_SIZE, LM_VOACB_CUTOFF, cuda_device_dispatcher
-    from spwsi.bilm_elmo import BilmElmo
+    from spwsi.bilm_elmo import BilmElmo  # this is intentionally here, when ELMo is imported some state is set
     worker_id, cuda_device = cuda_device_dispatcher.get()
     np.random.seed((int(time.time() * 100) % 10000) + worker_id)
 
@@ -141,6 +152,19 @@ if __name__ == '__main__':
     if not os.path.exists(debug_dir):
         os.makedirs(debug_dir)
 
+    target_function = None
+    gen_name = sys.argv.get(1, '')
+    if gen_name == 'ablation':
+        target_function = get_configs_ablations
+    elif gen_name == 'search':
+        target_function = get_configs_random_search
+    elif gen_name == 'n_clusters':
+        target_function = get_configs_cluster_size
+    else:
+        raise Exception(
+            'missing valid scenario in script arguments, valid scenarios are: ablation,search and n_clusters')
+    run_name += '-' + gen_name
+
     pool = multiprocessing.Pool(len(gpus), initializer=worker_init)
 
     out_csv_path = os.path.join(debug_dir, run_name + '.data.csv')
@@ -152,7 +176,7 @@ if __name__ == '__main__':
                               'disable_symmetric_patterns', 'disable_tfidf', 'prediction_cutoff']
         writer.writerow(
             ['run_name', 'target', 'FBC', 'FNMI', 'AVG', 'lm_batch_size', 'cutoff_lm_vocab'] + conf_params_report)
-        for run_name_done, conf, scores in tqdm(pool.imap_unordered(worker_do, enumerate(get_configs_random_search()))):
+        for run_name_done, conf, scores in tqdm(pool.imap_unordered(worker_do, enumerate(get_configs_cluster_size()))):
             for target, target_scores in scores.items():
                 writer.writerow([run_name_done, target,
                                  target_scores['FBC'],

@@ -120,7 +120,8 @@ Developed and tested on Ubuntu 16, Cuda 8.0
 #### Usage by filename:
 sh download_resources.sh - download SemEval 2013 task dataset and ELMo's output matrix weights and put them in the resource directory
 python spwsi_elmo.py <args> - induce senses from SemEval 2013 task dataset
-python spwsi_elmo_ablation_batch.py - run a batch of induction runs efficiently, edit code and run for modifications
+python spwsi_elmo_ablation_batch.py <scenario> - run a batch of induction runs efficiently,
+ provided scenarios: ablation, search, n_clusters. edit code and run for modifications
 sh evaluate_key.sh - after each run, a SemEval .key file is produced in the debug dir, you can re-run and print task scoring on the .key file produced using this script
 
 spwsi/bilm_interface.py - if you want to use a custom biLM, this interface should be implemented
