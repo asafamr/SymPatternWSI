@@ -170,11 +170,13 @@ class BilmElmo(Bilm):
         inst_id_sent_tuples, embedded = self._embed_sentences(inst_id_to_sentence, disable_symmetric_patterns)
         lemma = inst_id_sent_tuples[0][0].split('.')[0]
 
-        voabulary_used = self.elmo_word_vocab if disable_lemmatiziation else self.elmo_word_vocab_lemmatized
+        vocabulary_used = self.elmo_word_vocab if disable_lemmatiziation else self.elmo_word_vocab_lemmatized
 
         results = {}
         for i in range(len(inst_id_sent_tuples)):
             inst_id, (tokens, target_idx) = inst_id_sent_tuples[i]
+            target_word_lower = tokens[target_idx].lower()
+
             sentence = ' '.join([t if i != target_idx else '***%s***' % t for i, t in enumerate(tokens)])
             logging.info('instance %s sentence: %s' % (inst_id, sentence))
 
@@ -194,7 +196,8 @@ class BilmElmo(Bilm):
                 new_samples = list(
                     np.random.choice(forward_idxs, n_represent * n_samples_side * 2,
                                      p=forward_dist))
-                new_samples = [voabulary_used[x] for x in new_samples if voabulary_used[x].lower() != lemma]
+                new_samples = [vocabulary_used[x] for x in new_samples if
+                               vocabulary_used[x].lower() != lemma and vocabulary_used[x].lower() != target_word_lower]
                 forward_samples += new_samples
 
             backward_samples = []
@@ -202,7 +205,8 @@ class BilmElmo(Bilm):
                 new_samples = list(
                     np.random.choice(backward_idxs, n_represent * n_samples_side * 2,
                                      p=backward_dist))
-                new_samples = [voabulary_used[x] for x in new_samples if voabulary_used[x].lower() != lemma]
+                new_samples = [vocabulary_used[x] for x in new_samples if
+                               vocabulary_used[x].lower() != lemma and vocabulary_used[x].lower() != target_word_lower]
                 backward_samples += new_samples
             logging.info('some forward samples: %s' % [x for x in forward_samples[:5]])
             logging.info('some backward samples: %s' % [x for x in backward_samples[:5]])
