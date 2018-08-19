@@ -127,4 +127,8 @@ Developed and tested on Ubuntu 16, Cuda 8.0
 * **spwsi/bilm_interface.py** - if you want to use a custom biLM, this interface should be implemented
 
 ### Results:
-TODO:add
+As detailed in the paper, the proposed method achieves these scores on SemEval 2013 task 13:
+Score: mean(standard deviation)
+FNMI: 11.26(0.43)
+FBC: 57.49(0.23)
+AVG: 25.43(0.48)
