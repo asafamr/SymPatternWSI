@@ -212,7 +212,7 @@ class BilmElmo(Bilm):
             logging.info('some backward samples: %s' % [x for x in backward_samples[:5]])
             representatives = []
             for _ in range(n_represent):
-                representative = {}
+                representative = dict()
                 for _ in range(n_samples_side):
                     for sample_src in forward_samples, backward_samples:
                         sample_word = sample_src.pop()

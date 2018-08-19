@@ -33,8 +33,8 @@ class SPWSI:
 
         semeval_dataset_by_target = defaultdict(dict)
 
-        # SemEval target might be for example book.n (lemma+POS)
-        # SemEval instance might be for example book.n.12 (target+index).
+        # SemEval target might be, for example, book.n (lemma+POS)
+        # SemEval instance might be, for example, book.n.12 (target+index).
         # In the example instance above, corresponds to one usage of book as a noun in a sentence
 
         # semeval_dataset_by_target is a dict from target to dicts of instances with their sentence
