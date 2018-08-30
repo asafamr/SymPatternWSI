@@ -29,7 +29,7 @@ class BilmElmo(Bilm):
         logging.info('reading elmo weights')
         with h5py.File(weights_path, 'r', libver='latest', swmr=True) as fin:
             self.elmo_softmax_w = fin['softmax/W'][:cutoff_elmo_vocab, :].transpose()
-
+            # self.elmo_softmax_b=fin['softmax/b'][:cutoff_elmo_vocab]
         self.elmo_word_vocab = []
         self.elmo_word_vocab_lemmatized = []
 
@@ -62,7 +62,7 @@ class BilmElmo(Bilm):
         self.elmo_word_vocab_lemmatized = [x for i, x in enumerate(self.elmo_word_vocab_lemmatized) if
                                            i not in lines_to_remove]
         self.elmo_softmax_w = np.delete(self.elmo_softmax_w, list(lines_to_remove), 1)
-
+        # self.elmo_softmax_b = np.delete(self.elmo_softmax_b, list(lines_to_remove))
         # logging.info('caching cnn embeddings')
         # self.elmo.elmo_bilm.create_cached_cnn_embeddings(self.elmo_word_vocab)
         # self.elmo.elmo_bilm._has_cached_vocab = True
@@ -107,7 +107,7 @@ class BilmElmo(Bilm):
             _ = list(self.elmo.embed_sentences([warm_up_sent] * self.batch_size, self.batch_size))
 
     def _get_top_words_dist(self, state, cutoff):
-        log_probs = np.matmul(state, self.elmo_softmax_w)
+        log_probs = np.matmul(state, self.elmo_softmax_w)# (not) + self.elmo_softmax_b - we prevent unconditionally probable substitutes predictions by ignoring the bias vector
         top_k_log_probs = np.argpartition(-log_probs, cutoff)[: cutoff]
         top_k_log_probs_vals = log_probs[top_k_log_probs]
         e_x = np.exp(top_k_log_probs_vals - np.max(top_k_log_probs_vals))

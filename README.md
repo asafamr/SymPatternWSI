@@ -46,11 +46,11 @@ Arguments of spwsi_elmo.py listed below.
 Note that the script is creating a lemmatized vocabulary file in the
 resources directory and therefore needs write permission to it
 
-we also provide spwsi_elmo_ablation_batch.py to run a batch of runs,
+we also provide spwsi_elmo_batch_run.py to run a batch of runs,
 such as ablation or paramters search, while keeping relevant
-data structure in memory. spwsi_elmo_ablation_batch.py is intened
+data structures in memory.
 
-script arguments:
+spwsi_elmo.py script arguments:
 ```bash
 python spwsi_elmo.py -h
 usage: spwsi_elmo.py [-h] [--n-clusters N_CLUSTERS]
@@ -69,7 +69,7 @@ BiLM Symmetric Patterns WSI Demo
 optional arguments:
   -h, --help            show this help message and exit
   --n-clusters N_CLUSTERS
-                        number of clusters per instance (default: 8)
+                        number of clusters per instance (default: 7)
   --n-representatives N_REPRESENT
                         number of representations per sentence (default: 20)
   --n-samples-side N_SAMPLES_SIDE
@@ -111,7 +111,7 @@ inside "debug" directory after running the script.
 
 Additionally, a SemEval .key file will be created inside the "debug" dir.
 This file will contain a mapping from the task dataset entries to their
-induced senses. The SemEval task code evaluate this mapping and produce
+induced senses. The SemEval task code evaluates this mapping and produce
 two metric scores: FNMI and FBC as described in the paper.
 You can re-run this key file evaluation using evaluate_key.sh
 
