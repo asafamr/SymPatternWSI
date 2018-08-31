@@ -2,7 +2,7 @@
 
 This repository contains reproducing code for the results in the paper:
 
-[Word Sense Induction with Neural biLM and Symmetric Patterns](https://arxiv.org/pdf/1808.08518.pdf)
+[Word Sense Induction with Neural biLM and Symmetric Patterns](https://arxiv.org/abs/1808.08518)
 
 
 
