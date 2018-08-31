@@ -1,7 +1,10 @@
 ### Word Sense Induction with Neural biLM and Symmetric Patterns
 
-This repository contains reproducing code for the results in Word Sense
-Induction with Neural biLM and Symmetric Patterns paper
+This repository contains reproducing code for the results in the paper:
+
+[Word Sense Induction with Neural biLM and Symmetric Patterns](https://arxiv.org/pdf/1808.08518.pdf)
+
+
 
 ##### Usage instructions:
 The code is written in python 3.6 and runs the SemEval 2013 task 13
